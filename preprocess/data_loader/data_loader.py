@@ -33,7 +33,9 @@ class DataLoader():
 
         
 
-        self.length = len(rois_cbis_ddsm.keys()) + len(rois_inbreast.keys()) + len(rois_mias.keys())
+        self.length = len(rois_cbis_ddsm) + len(rois_inbreast) + len(rois_mias)
+
+        self.length_rois = sum([len(rois) for dataset in [rois_inbreast, rois_cbis_ddsm, rois_mias] for k, rois in dataset.items()])
 
         self.datasets_rois = {
             "mias": rois_mias, "inbreast": rois_inbreast, "cbis_ddsm": rois_cbis_ddsm}
