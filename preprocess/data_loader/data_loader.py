@@ -110,7 +110,7 @@ class DataLoader():
                         if self.enable_denoising:
                             preprocessed_img = self.model.predict(
                                 np.array(preprocessed_img).reshape(self.input_shape), axes="YX")
-                        yield preprocessed_img, box, img if for_display else preprocessed_img, box["pathology"]
+                        yield (preprocessed_img, box, img) if for_display else (preprocessed_img, box["pathology"])
 
         return data_generator
 
