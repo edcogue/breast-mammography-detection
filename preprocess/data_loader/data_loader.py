@@ -12,15 +12,11 @@ CBIS_DDSM_PATH = "/kaggle/input/mias-cbis-ddsm-inbreast/Mammographies/CBIS-DDSM"
 
 
 class DataLoader():
-    def __init__(self, inbreast_path=INBREAST_PATH, mias_path=MIAS_PATH, cbis_ddsm_path=CBIS_DDSM_PATH, input_shape=(1600, 1600), denoising=False, denoiser_model_path="/kaggle/working/models", denoiser_name="n2v_2D"):
+    def __init__(self, inbreast_path=INBREAST_PATH, mias_path=MIAS_PATH, cbis_ddsm_path=CBIS_DDSM_PATH, input_shape=(1600, 1600), denoiser_model_path="/kaggle/working/models", denoiser_name="n2v_2D"):
         self.inbreast_path = inbreast_path
         self.mias_path = mias_path
         self.cbis_ddsm_path = cbis_ddsm_path
         self.input_shape = input_shape
-        self.enable_denoising = denoising
-
-        if self.enable_denoising:
-            self._load_denoiser(denoiser_model_path, denoiser_name)
 
         with open(os.path.join(self.inbreast_path, "roi_images.json"), "r") as f:
             rois_inbreast = json.load(f)
@@ -31,6 +27,8 @@ class DataLoader():
         with open(os.path.join(self.mias_path, "roi_images.json"), "r") as f:
             rois_mias = json.load(f)
 
+        self.denoiser_model_path=denoiser_model_path
+        self.denoiser_name=denoiser_name
         
 
         self.length = len(rois_cbis_ddsm) + len(rois_inbreast) + len(rois_mias)
@@ -43,8 +41,8 @@ class DataLoader():
         self.dataset_to_dir = {
             "mias": self.mias_path, "inbreast": self.inbreast_path, "cbis_ddsm": self.cbis_ddsm_path}
 
-    def _load_denoiser(self, basedir, model_name):
-        self.model = N2V(None, model_name, basedir=basedir)
+    def _load_denoiser(self):
+        self.model = N2V(None, self.denoiser_name, basedir=self.denoiser_model_path)
 
     def _get_images_paths(self, path):
         images_path = []
@@ -62,7 +60,9 @@ class DataLoader():
         img = tf.io.decode_image(img, channels=1)
         return img
 
-    def object_detection_generator(self):
+    def object_detection_generator(self, return_filename=False, denoise=False):
+        if denoise:
+            self._load_denoiser()
         def data_generator():
             for dataset, rois in self.datasets_rois.items():
                 for file, roi in rois.items():
@@ -81,15 +81,17 @@ class DataLoader():
                     preprocessed_img, preprocessed_boxes = self._preprocess_img_and_boxes(
                         img, boxes)
 
-                    if self.enable_denoising:
+                    if denoise:
                         preprocessed_img = self.model.predict(
                             np.array(preprocessed_img).reshape(self.input_shape), axes="YX")
 
-                    yield preprocessed_img, preprocessed_boxes
+                    yield (preprocessed_img, preprocessed_boxes, file) if return_filename else (preprocessed_img, preprocessed_boxes)
 
         return data_generator
 
-    def classification_generator(self, output_size = None, for_display=False):
+    def classification_generator(self, output_size = None, for_display=False, denoise=False):
+        if denoise:
+            self._load_denoiser()
         if output_size is None:
             output_size = self.input_shape
         def data_generator():
@@ -107,7 +109,7 @@ class DataLoader():
                         preprocessed_img = self._crop_image(
                             img, box, output_size)
 
-                        if self.enable_denoising:
+                        if denoise:
                             preprocessed_img = self.model.predict(
                                 np.array(preprocessed_img).reshape(self.input_shape), axes="YX")
                         yield (preprocessed_img, box, img) if for_display else (preprocessed_img, box["pathology"])
