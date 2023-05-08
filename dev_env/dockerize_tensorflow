@@ -1,0 +1,16 @@
+ Follow this instructions https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html#docker
+ 
+ https://www.tensorflow.org/install/docker
+
+ nvidia-drivers-530
+ 
+docker run --gpus all -p 8888:8888 -v /home/eduard/Documents/notebooks_docker:/tf/custom_notebooks tensorflow/tensorflow:latest-gpu-jupyter
+ 
+ /home/eduard/Documents/notebooks_docker
+ 
+ apt-get update && apt-get install ffmpeg libsm6 libxext6  -y
+ pip install opencv-contrib-python pandas
+
+docker build . -t tensorflow-full
+
+docker run --gpus all -p 8888:8888 -v /home/eduard/Documents/notebooks_docker:/tf/custom_notebooks tensorflow-full
