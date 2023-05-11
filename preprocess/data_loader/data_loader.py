@@ -5,6 +5,15 @@ import tensorflow as tf
 import albumentations as albu
 import cv2
 from n2v.models import N2V
+from PIL import Image
+import sys
+sys.path.append('/tf/code/vit-object-detection/detectron2')
+try:
+    from detectron2.structures import BoxMode
+except:
+    print("Detectron2 not imported")
+
+    
 
 INBREAST_PATH = "/kaggle/input/mias-cbis-ddsm-inbreast/Mammographies/INBreast"
 MIAS_PATH = "/kaggle/input/mias-cbis-ddsm-inbreast/Mammographies/MIAS"
@@ -29,17 +38,23 @@ class DataLoader():
 
         self.denoiser_model_path=denoiser_model_path
         self.denoiser_name=denoiser_name
-        
+        self.last_id=0
 
         self.length = len(rois_cbis_ddsm) + len(rois_inbreast) + len(rois_mias)
 
         self.length_rois = sum([len(rois) for dataset in [rois_inbreast, rois_cbis_ddsm, rois_mias] for k, rois in dataset.items()])
 
         self.datasets_rois = {
-            "mias": rois_mias, "inbreast": rois_inbreast, "cbis_ddsm": rois_cbis_ddsm}
+            "mias": rois_mias, 
+            "inbreast": rois_inbreast, 
+            "cbis_ddsm": rois_cbis_ddsm
+        }
 
         self.dataset_to_dir = {
-            "mias": self.mias_path, "inbreast": self.inbreast_path, "cbis_ddsm": self.cbis_ddsm_path}
+            "mias": self.mias_path,
+            "inbreast": self.inbreast_path,
+            "cbis_ddsm": self.cbis_ddsm_path
+        }
 
     def _load_denoiser(self):
         self.model = N2V(None, self.denoiser_name, basedir=self.denoiser_model_path)
@@ -59,11 +74,70 @@ class DataLoader():
         img = tf.io.read_file(file_path)
         img = tf.io.decode_image(img, channels=1)
         return img
+    
+    def _to_hugging_face(self, image_id, img, boxes):
+        response = {
+            "image_id": image_id,
+            "image": img,
+            "width": img.size[0],
+            "height": img.size[1],
+            "objects": {
+                "id": [self.last_id+i+1 for i in range(len(boxes))],
+                "area": [ box[2]*box[3] for box in boxes ],
+                "bbox": boxes,
+                "category": ["Abnormality" for i in range(len(boxes))],
+            }
+        }
+        self.last_id+=len(boxes)
+        return response
+    
+    def _format_hugging_face(self, image_id, path, boxes):
+        with Image.open(path) as img:
+            return self._to_hugging_face(image_id, img, boxes)
+        
+    def _format_detectron(self, image_id, path, boxes):
+        with Image.open(path) as img:
+            response = {
+                "file_name": path,
+                "width": img.size[0],
+                "height": img.size[1],
+                "image_id": image_id,
+                "annotations": [{
+                    "bbox": box,
+                    "bbox_mode": BoxMode.XYWH_ABS,
+                    "segmentation": [[box[0], box[1],
+                                     box[0]+box[2], box[1],
+                                     box[0]+box[2], box[1]+box[3],
+                                     box[0], box[1]+box[3],
+                                     box[0], box[1],
+                                    ]],
+                    "category_id": 0,
+                } for box in boxes]
+            }
+            return response
+        
+    def _format_common(self, path, boxes, denoise, file, return_filename):
+        img = self._load_img_from_path_no_resize(path)
+        img, boxes = self.preprocess_img_and_boxes(
+            img, boxes)
+        if denoise:
+            img = self.model.predict(
+                np.array(img).reshape(self.input_shape), axes="YX")
+        return (img, boxes, file) if return_filename else (img, boxes)
+    
+    def _format_for(self, image_id, path, boxes, file, denoise, return_filename, target_library=None):
+        if target_library == "hugging_face":
+            return self._format_hugging_face(image_id, path, boxes)
+        if target_library == "detectron2":
+            return self._format_detectron(image_id, path, boxes)
+        return self._format_common(path, boxes, denoise, file, return_filename)
 
-    def object_detection_generator(self, return_filename=False, denoise=False):
+    def object_detection_generator(self, return_filename=False, denoise=False, target_library=None):
         if denoise:
             self._load_denoiser()
         def data_generator():
+            self.last_id=0
+            image_id=0
             for dataset, rois in self.datasets_rois.items():
                 for file, roi in rois.items():
                     roi = list(
@@ -73,19 +147,13 @@ class DataLoader():
 
                     path = os.path.join(
                         self.dataset_to_dir[dataset], file+".png")
-                    img = self._load_img_from_path_no_resize(path)
-
+                    
                     boxes = [[box["x"], box["y"], box["w"], box["h"]]
-                             for box in roi]
-
-                    preprocessed_img, preprocessed_boxes = self._preprocess_img_and_boxes(
-                        img, boxes)
-
-                    if denoise:
-                        preprocessed_img = self.model.predict(
-                            np.array(preprocessed_img).reshape(self.input_shape), axes="YX")
-
-                    yield (preprocessed_img, preprocessed_boxes, file) if return_filename else (preprocessed_img, preprocessed_boxes)
+                                 for box in roi]
+                    image_id+=1
+                    response = self._format_for(image_id, path, boxes, file, denoise, return_filename, target_library)
+                    yield response
+                    
 
         return data_generator
 
@@ -130,6 +198,23 @@ class DataLoader():
             return albu.LongestMaxSize(max_size=N)
         else:
             return albu.SmallestMaxSize(max_size=N)
+        
+    def transform(self, image, bboxes, labels):
+            transform = albu.Compose([
+                self._resize_correct_side(image),
+                albu.PadIfNeeded(
+                    min_height=self.input_shape[0], min_width=self.input_shape[1], border_mode=0, value=(0, 0, 0)),
+                albu.CLAHE(clip_limit=(1, 10), p=1),
+                # Add as many transformations as needed
+                albu.Rotate(p=0.2, border_mode=cv2.BORDER_CONSTANT,),
+                albu.HorizontalFlip(p=0.2),
+                albu.VerticalFlip(p=0.2),
+            ],
+                bbox_params=albu.BboxParams(
+                    format='coco', label_fields=["category"])
+            )
+            return transform(
+            image=image, bboxes=bboxes, category=labels)
 
     def _apply_albumentations(self, image, bboxes):
         image = image.numpy().astype("uint8")
@@ -175,6 +260,6 @@ class DataLoader():
         new_img = transform_data["image"]
         return new_img.astype("uint8")
 
-    def _preprocess_img_and_boxes(self, image, boxes):
+    def preprocess_img_and_boxes(self, image, boxes):
         image, boxes = self._apply_albumentations(image, boxes)
         return image, boxes
