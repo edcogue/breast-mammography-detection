@@ -1,0 +1,22 @@
+FROM pytorch/pytorch
+
+# alias python='python3'
+RUN ln -s /usr/bin/python3 /usr/bin/python
+
+# dependencies for cv2 and albumentations
+RUN apt-get update && apt-get install ffmpeg libsm6 libxext6 git -y
+
+# build with some basic python packages
+RUN pip install \
+    numpy \
+    torch \
+    jupyterlab
+
+RUN python -m pip install git+https://github.com/huggingface/accelerate
+RUN pip install opencv-contrib-python pandas n2v albumentations pydicom beautifulsoup4 lxml
+RUN pip install -q datasets transformers evaluate timm pillow
+RUN pip install ultralytics hyperopt
+RUN pip install tensorflow
+
+# start jupyter lab
+CMD ["jupyter", "lab", "--ip=0.0.0.0", "--port=8888", "--allow-root", "--no-browser"]
