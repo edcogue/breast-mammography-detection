@@ -1,2 +1,10 @@
 .ipynb_checkpoint
 *checkpoint.ipynb
+._dataset*
+*.lock
+*.arrow
+dataset_info.json
+
+*.pyc
+YOLOv8/training_yolo_v8/runs/*
+*.bin

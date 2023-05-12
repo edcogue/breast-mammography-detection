@@ -156,8 +156,14 @@ class DataLoader():
                     
 
         return data_generator
+    
+    def _class_format_for(self, img, preprocessed_img, box, for_display, output_size, target_library=None):
+        if target_library=="hugging_face":
+            return {"image": Image.fromarray(np.array(preprocessed_img).reshape(output_size)),
+                               "label": box["pathology"]}
+        return (preprocessed_img, box, img) if for_display else (preprocessed_img, box["pathology"])
 
-    def classification_generator(self, output_size = None, for_display=False, denoise=False):
+    def classification_generator(self, output_size = None, for_display=False, denoise=False, target_library=None):
         if denoise:
             self._load_denoiser()
         if output_size is None:
@@ -175,12 +181,13 @@ class DataLoader():
                     img = self._load_img_from_path_no_resize(path)
                     for box in roi:
                         preprocessed_img = self._crop_image(
-                            img, box, output_size)
+                            img, box, output_size, augmentation=target_library!="hugging_face")
 
                         if denoise:
                             preprocessed_img = self.model.predict(
                                 np.array(preprocessed_img).reshape(self.input_shape), axes="YX")
-                        yield (preprocessed_img, box, img) if for_display else (preprocessed_img, box["pathology"])
+                        response = self._class_format_for(img, preprocessed_img, box, for_display, output_size, target_library)
+                        yield response
 
         return data_generator
 
@@ -239,22 +246,33 @@ class DataLoader():
         new_boxes = transform_data["bboxes"]
         return new_img.astype("uint8"), new_boxes
 
-    def _crop_image(self, image, box, output_size):
+    def _crop_image(self, image, box, output_size, augmentation=True):
         image = image.numpy().astype("uint8")
-
-        transform = albu.Compose([
-            albu.CLAHE(clip_limit=(1, 10), p=1),
-            albu.Crop(x_min=int(box["x"]), y_min=int(box["y"]),
-                      x_max=int(box["x"]+box["w"]), y_max=int(box["y"]+box["h"])),
-            self._resize_correct_side(image),
-            albu.PadIfNeeded(
-                min_height=self.input_shape[0], min_width=self.input_shape[1], border_mode=0, value=(0, 0, 0)),
-            albu.Resize(height=output_size[0], width=output_size[1]),
-            # Add as many transformations as needed
-            albu.Rotate(p=0.2, border_mode=cv2.BORDER_CONSTANT,),
-            albu.HorizontalFlip(p=0.2),
-            albu.VerticalFlip(p=0.2),
-        ])
+        
+        if augmentation:
+            transform = albu.Compose([
+                albu.CLAHE(clip_limit=(1, 10), p=1),
+                albu.Crop(x_min=int(box["x"]), y_min=int(box["y"]),
+                          x_max=int(box["x"]+box["w"]), y_max=int(box["y"]+box["h"])),
+                self._resize_correct_side(image),
+                albu.PadIfNeeded(
+                    min_height=self.input_shape[0], min_width=self.input_shape[1], border_mode=0, value=(0, 0, 0)),
+                albu.Resize(height=output_size[0], width=output_size[1]),
+                # Add as many transformations as needed
+                albu.Rotate(p=0.2, border_mode=cv2.BORDER_CONSTANT,),
+                albu.HorizontalFlip(p=0.2),
+                albu.VerticalFlip(p=0.2),
+            ])
+        else:
+            transform = albu.Compose([
+                albu.CLAHE(clip_limit=(1, 10), p=1),
+                albu.Crop(x_min=int(box["x"]), y_min=int(box["y"]),
+                          x_max=int(box["x"]+box["w"]), y_max=int(box["y"]+box["h"])),
+                self._resize_correct_side(image),
+                albu.PadIfNeeded(
+                    min_height=self.input_shape[0], min_width=self.input_shape[1], border_mode=0, value=(0, 0, 0)),
+                albu.Resize(height=output_size[0], width=output_size[1])
+            ])
 
         transform_data = transform(image=image)
         new_img = transform_data["image"]
