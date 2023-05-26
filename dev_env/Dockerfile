@@ -9,3 +9,5 @@ RUN pip install torch torchvision torchaudio --index-url https://download.pytorc
 RUN pip install optuna
 RUN pip install --upgrade accelerate
 RUN pip install pycocotools
+RUN pip install plotly
+RUN pip install nltk
