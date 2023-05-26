@@ -55,6 +55,30 @@ class DataLoader():
             "inbreast": self.inbreast_path,
             "cbis_ddsm": self.cbis_ddsm_path
         }
+        
+        self.type2int= {
+            "Mass": 0,
+            "Unknown": 1,
+            "Assymetry": 2,
+            "Distortion": 3,
+            "Spiculated Region": 4,
+            "Calcification": 5,
+            "Cluster": 6,
+            "Assymetry": 7
+        }
+        
+        self.int2type= {
+            0: "Mass",
+            1: "Unknown",
+            2: "Assymetry",
+            3: "Distortion",
+            4: "Spiculated Region",
+            5: "Calcification",
+            6: "Cluster",
+            7: "Assymetry"
+        }
+        
+        self.n_types = len(self.int2type.keys())
 
     def _load_denoiser(self):
         self.model = N2V(None, self.denoiser_name, basedir=self.denoiser_model_path)
@@ -157,13 +181,25 @@ class DataLoader():
 
         return data_generator
     
-    def _class_format_for(self, img, preprocessed_img, box, for_display, output_size, target_library=None):
+    def _gen_hot_encode(self,value):
+        hot_encode = np.zeros(self.n_types)
+        hot_encode[value]= 1.0
+        return hot_encode
+    
+    def _class_format_for(self, img, preprocessed_img, classify_types, box, for_display, output_size, target_library=None, types_as=None):
         if target_library=="hugging_face":
             return {"image": Image.fromarray(np.array(preprocessed_img).reshape(output_size)),
                                "label": box["pathology"]}
+        if classify_types:
+            if types_as == "int":
+                return preprocessed_img, self.type2int[box["type"]]
+            if types_as == "hot_encode":
+                return preprocessed_img, self._gen_hot_encode(self.type2int[box["type"]])
+            
+            return preprocessed_img, box["type"]
         return (preprocessed_img, box, img) if for_display else (preprocessed_img, box["pathology"])
 
-    def classification_generator(self, output_size = None, for_display=False, denoise=False, target_library=None):
+    def classification_generator(self, output_size = None, classify_types=False, for_display=False, denoise=False, target_library=None, types_as=None):
         if denoise:
             self._load_denoiser()
         if output_size is None:
@@ -171,8 +207,9 @@ class DataLoader():
         def data_generator():
             for dataset, rois in self.datasets_rois.items():
                 for file, roi in rois.items():
-                    roi = list(
-                        filter(lambda r: self._check_type_abnormality(r), roi))
+                    if not classify_types:
+                        roi = list(
+                            filter(lambda r: self._check_type_abnormality(r), roi))
                     if not roi:
                         continue
 
@@ -186,7 +223,7 @@ class DataLoader():
                         if denoise:
                             preprocessed_img = self.model.predict(
                                 np.array(preprocessed_img).reshape(self.input_shape), axes="YX")
-                        response = self._class_format_for(img, preprocessed_img, box, for_display, output_size, target_library)
+                        response = self._class_format_for(img, preprocessed_img, classify_types, box, for_display, output_size, target_library, types_as)
                         yield response
 
         return data_generator
