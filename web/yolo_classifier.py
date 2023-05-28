@@ -31,5 +31,4 @@ def classify_type(image):
     result = [{"label": result.names[i], "score": p}
               for i, p in enumerate(result.probs.cpu().numpy())]
     best_score = max(result, key=lambda x: x["score"])["label"]
-    print(best_score, file=sys.stderr)
     return type2color[best_score]
