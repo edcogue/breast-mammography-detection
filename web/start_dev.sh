@@ -4,6 +4,6 @@ docker run -p 8080:8080 -v /home/eduard/Documents/Master\ ciencia\ de\ dades/TFM
 -v /home/eduard/Documents/Master\ ciencia\ de\ dades/TFM/src/breast-mammography-detection/vit-classification/:/app/models/vit_classifier \
 -v /home/eduard/Documents/Master\ ciencia\ de\ dades/TFM/src/breast-mammography-detection/YOLOv8/object_detector/runs/detect/train2/weights:/app/models/yolo_object_detector \
 -v /home/eduard/Documents/Master\ ciencia\ de\ dades/TFM/src/breast-mammography-detection/YOLOv8/classificator/runs/classify/train38/weights:/app/models/yolo_classifier \
-mammographies_web
+dev_tfm
 
-docker rm $(docker stop $(docker ps -a -q --filter ancestor=mammographies_web --format="{{.ID}}"))
+docker rm $(docker stop $(docker ps -a -q --filter ancestor=dev_tfm --format="{{.ID}}"))

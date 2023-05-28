@@ -7,4 +7,4 @@ dataset_info.json
 
 *.pyc
 YOLOv8/training_yolo_v8/runs/*
-*.bin
+logs
