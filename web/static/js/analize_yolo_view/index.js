@@ -59,11 +59,13 @@ $(document).ready(function (e) {
         $("#upload_image_container").hide();
         $("#submit_button").hide();
         $("#download_button").show();
+        $("#legend").show();
         $("#refresh_button").show();
       },
       error: function (response) {
         $("#alert_banner").html(response.responseText);
         $("#loader_spiner").hide();
+        $("#legend").hide();
         $("#alert_banner").show();
         $("#notPreview").hide();
       },
