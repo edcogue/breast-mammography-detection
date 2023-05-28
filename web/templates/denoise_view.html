@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Detección masas cancerígenas en mamografías</title>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/bootstrap.min.css') }}"
+    />
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/analize_view/style.css') }}"
+    />
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/footer/style.css') }}"
+    />
+    <link
+      rel="stylesheet"
+      href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css"
+    />
+  </head>
+
+  <body>
+    <div class="py-4">
+      <header class="text-white text-center">
+        <h1 class="display-5">
+          Supresión de ruido para mamografías
+        </h1>
+        <div class="row">
+          <div class="col-md-6">
+            <div class="image-area mx-4 mt-4">
+              <div id="dwv">
+                <!-- Layer Container -->
+                <div id="layerGroup0" class="layerGroup"></div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="row py-4" style="height: 100%">
+              <div class="col-lg-6 align-self-center mx-auto">
+                <!-- Upload image input-->
+                <div
+                  id="upload_image_container"
+                  class="input-group mb-3 px-2 py-2 rounded-pill bg-white shadow-sm"
+                >
+                  <input
+                    id="upload"
+                    type="file"
+                    class="form-control border-0"
+                  />
+                  <label
+                    id="upload-label"
+                    for="upload"
+                    class="font-weight-light text-muted"
+                    >Elige imagen</label
+                  >
+                  <div class="input-group-append">
+                    <label
+                      for="upload"
+                      class="btn btn-light m-0 rounded-pill px-4"
+                    >
+                      <em class="fa fa-cloud-upload mr-2 text-muted"></em
+                      ><small class="text-uppercase font-weight-bold text-muted"
+                        >Elige imagen</small
+                      ></label
+                    >
+                  </div>
+                </div>
+
+                <!-- Loading spinner for responses-->
+                <div class="d-flex justify-content-center">
+                  <div
+                    class="spinner-border text-light"
+                    id="loader_spiner"
+                    style="display: none"
+                    role="status"
+                  >
+                    <span class="sr-only">Loading...</span>
+                  </div>
+                </div>
+                <!-- Alert for response errors-->
+                <div
+                  id="alert_banner"
+                  class="alert alert-danger"
+                  role="alert"
+                  style="display: none"
+                >
+                  Error
+                </div>
+                <!-- Button for upload file-->
+                <div class="row py-4">
+                  <div class="col-lg-6 mx-auto">
+                    <button
+                      id="submit_button"
+                      type="button"
+                      class="btn btn-info rounded-pill btn-lg btn-block"
+                    >
+                      <em class="fa fa-magic mr-2"></em> Limpiar imagen
+                    </button>
+                  </div>
+                </div>
+                <!-- Button for download file-->
+                <div class="row py-4">
+                  <div class="col-lg-6 mx-auto">
+                    <a id="download_link" download="result.png" href="#">
+                      <button
+                        id="download_button"
+                        type="button"
+                        style="display: none"
+                        class="btn btn-primary rounded-pill btn-lg btn-block"
+                      >
+                        <em class="fa fa-download mr-2"></em> Descargar
+                      </button>
+                    </a>
+                  </div>
+                </div>
+                <div class="row py-4">
+                  <div class="col-lg-6 mx-auto">
+                    <button
+                      id="refresh_button"
+                      type="button"
+                      style="display: none"
+                      class="btn btn-success rounded-pill btn-lg btn-block"
+                    >
+                      <em class="fa fa-refresh mr-2"></em> Limpiar otra imagen
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </header>
+    </div>
+
+    <footer class="text-center text-lg-start fixed-bottom">
+      <div class="text-center p-3">
+        <p id="created_by" class="mb font-weight-bold">
+          Creado por Eduard Conesa Guerrero
+          <a
+            href="https://github.com/edcogue/breast-mammography-detection"
+          >
+            <u><em class="fa fa-github ml-2 fa-3x"></em></u>
+          </a>
+        </p>
+      </div>
+    </footer>
+
+    <script src="{{ url_for('static', filename='js/jquery.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/bootstrap.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/dwv-v0.30.8.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/denoiser_view/index.js') }}"></script>
+  </body>
+</html>

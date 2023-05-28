@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Detección masas cancerígenas en mamografías</title>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/bootstrap.min.css') }}"
+    />
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/main/style.css') }}"
+    />
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/footer/style.css') }}"
+    />
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/flip_card/style.css') }}"
+    />
+    <link
+      rel="stylesheet"
+      href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css"
+    />
+  </head>
+
+  <body>
+    <div class="py-4">
+      <header class="text-white text-center">
+        <h1 style="color: black">Breast Cancer App</h1>
+      </header>
+      <div class="row justify-content-center">
+        <div class="col-md-4 d-flex justify-content-center">
+          <div class="flip-card">
+            <div class="flip-card-inner">
+              <div class="flip-card-front">
+                <img
+                  src="{{ url_for('static', filename='images/denoiser.png') }}"
+                  alt="Avatar"
+                  style="width: 100%; height: 100%; object-fit: cover"
+                />
+              </div>
+              <div class="flip-card-back">
+                <h1>Supresión de ruido</h1>
+                <p>
+                  Ayuda a eliminar el posible ruido con un algoritmo basado en
+                  autoencoders
+                </p>
+                <p>
+                  La imagen resultado es una imagen de 1600x1600 pixels que
+                  mantiene la escala y se le añade margenes netros en caso de
+                  necesitarlo
+                </p>
+                <a class="btn btn-dark" href="/denoise" role="button">Probar</a>
+              </div>
+            </div>
+            <div class="row justify-content-center">
+              <p class="option">Denoiser</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4 d-flex justify-content-center">
+          <div class="flip-card">
+            <div class="flip-card-inner">
+              <div class="flip-card-front">
+                <img
+                  src="{{ url_for('static', filename='images/detector.png') }}"
+                  alt="Avatar"
+                  style="width: 100%; height: 100%; object-fit: cover"
+                />
+              </div>
+              <div class="flip-card-back">
+                <h1>Detección de anomalias con ViT</h1>
+                <p>
+                  Detección de anomalias y clasificación según benigna o maligna
+                  mediante algoritmos basados en transformers para visión.
+                </p>
+                <a class="btn btn-dark" href="/analize_vit" role="button"
+                  >Probar</a
+                >
+              </div>
+            </div>
+            <div class="row justify-content-center">
+              <p class="option">ViT Detector</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4 d-flex justify-content-center">
+          <div class="flip-card">
+            <div class="flip-card-inner">
+              <div class="flip-card-front">
+                <img
+                  src="{{ url_for('static', filename='images/detector.png') }}"
+                  alt="Avatar"
+                  style="width: 100%; height: 100%; object-fit: cover"
+                />
+              </div>
+              <div class="flip-card-back">
+                <h1>Detección de anomalias con YOLOv8</h1>
+                <p>
+                  Detección de anomalias y clasificación según benigna o maligna
+                  mediante la ultima versión de YOLOv8
+                </p>
+                <a class="btn btn-dark" href="/analize_yolo" role="button"
+                  >Probar</a
+                >
+              </div>
+            </div>
+            <div class="row justify-content-center">
+              <p class="option">YOLOv8 Detector</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer
+      class="text-center text-lg-start fixed-bottom"
+      style="background-color: rgba(0, 0, 0, 0)"
+    >
+      <div class="text-center p-3">
+        <p id="created_by" class="mb font-weight-bold" style="color: black">
+          Creado por Eduard Conesa Guerrero
+          <a href="https://github.com/edcogue/breast-mammography-detection">
+            <u><em class="fa fa-github ml-2 fa-3x"></em></u>
+          </a>
+        </p>
+      </div>
+    </footer>
+
+    <script src="{{ url_for('static', filename='js/jquery.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/bootstrap.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/dwv-v0.30.8.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/analize_view/index.js') }}"></script>
+  </body>
+</html>
