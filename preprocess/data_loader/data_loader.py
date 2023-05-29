@@ -21,7 +21,7 @@ CBIS_DDSM_PATH = "/kaggle/input/mias-cbis-ddsm-inbreast/Mammographies/CBIS-DDSM"
 
 
 class DataLoader():
-    def __init__(self, inbreast_path=INBREAST_PATH, mias_path=MIAS_PATH, cbis_ddsm_path=CBIS_DDSM_PATH, input_shape=(1600, 1600), denoiser_model_path="/kaggle/working/models", denoiser_name="n2v_2D"):
+    def __init__(self, inbreast_path=INBREAST_PATH, mias_path=MIAS_PATH, cbis_ddsm_path=CBIS_DDSM_PATH, input_shape=1600, denoiser_model_path="/kaggle/working/models", denoiser_name="n2v_2D"):
         self.inbreast_path = inbreast_path
         self.mias_path = mias_path
         self.cbis_ddsm_path = cbis_ddsm_path
@@ -227,27 +227,12 @@ class DataLoader():
                         yield response
 
         return data_generator
-
-    def _resize_correct_side(self, image):
-        h_in = image.shape[0]
-        w_in = image.shape[1]
-
-        input_is_wider = h_in <= w_in
-        output_is_wider = self.input_shape[0] <= self.input_shape[1]
-
-        increase_width_first = abs(
-            h_in/self.input_shape[0] - 1.0) < abs(w_in/self.input_shape[1] - 1.0)
-        N = self.input_shape[1] if increase_width_first else self.input_shape[0]
-        if input_is_wider != output_is_wider:
-            return albu.LongestMaxSize(max_size=N)
-        else:
-            return albu.SmallestMaxSize(max_size=N)
         
     def transform(self, image, bboxes, labels):
             transform = albu.Compose([
-                self._resize_correct_side(image),
+                albu.LongestMaxSize(max_size=self.input_shape),
                 albu.PadIfNeeded(
-                    min_height=self.input_shape[0], min_width=self.input_shape[1], border_mode=0, value=(0, 0, 0)),
+                    min_height=self.input_shape, min_width=self.input_shape, border_mode=0, value=(0, 0, 0)),
                 albu.CLAHE(clip_limit=(1, 10), p=1),
                 # Add as many transformations as needed
                 albu.Rotate(p=0.2, border_mode=cv2.BORDER_CONSTANT,),
@@ -264,9 +249,9 @@ class DataLoader():
         image = image.numpy().astype("uint8")
 
         transform = albu.Compose([
-            self._resize_correct_side(image),
+            albu.LongestMaxSize(max_size=self.input_shape),
             albu.PadIfNeeded(
-                min_height=self.input_shape[0], min_width=self.input_shape[1], border_mode=0, value=(0, 0, 0)),
+                min_height=self.input_shape, min_width=self.input_shape, border_mode=0, value=(0, 0, 0)),
             albu.CLAHE(clip_limit=(1, 10), p=1),
             # Add as many transformations as needed
             albu.Rotate(p=0.2, border_mode=cv2.BORDER_CONSTANT,),
@@ -291,10 +276,9 @@ class DataLoader():
                 albu.CLAHE(clip_limit=(1, 10), p=1),
                 albu.Crop(x_min=int(box["x"]), y_min=int(box["y"]),
                           x_max=int(box["x"]+box["w"]), y_max=int(box["y"]+box["h"])),
-                self._resize_correct_side(image),
+                albu.LongestMaxSize(max_size=output_size),
                 albu.PadIfNeeded(
-                    min_height=self.input_shape[0], min_width=self.input_shape[1], border_mode=0, value=(0, 0, 0)),
-                albu.Resize(height=output_size[0], width=output_size[1]),
+                    min_height=output_size, min_width=output_size, border_mode=0, value=(0, 0, 0)),
                 # Add as many transformations as needed
                 albu.Rotate(p=0.2, border_mode=cv2.BORDER_CONSTANT,),
                 albu.HorizontalFlip(p=0.2),
@@ -305,10 +289,9 @@ class DataLoader():
                 albu.CLAHE(clip_limit=(1, 10), p=1),
                 albu.Crop(x_min=int(box["x"]), y_min=int(box["y"]),
                           x_max=int(box["x"]+box["w"]), y_max=int(box["y"]+box["h"])),
-                self._resize_correct_side(image),
+                albu.LongestMaxSize(max_size=output_size),
                 albu.PadIfNeeded(
-                    min_height=self.input_shape[0], min_width=self.input_shape[1], border_mode=0, value=(0, 0, 0)),
-                albu.Resize(height=output_size[0], width=output_size[1])
+                    min_height=output_size, min_width=output_size, border_mode=0, value=(0, 0, 0)),
             ])
 
         transform_data = transform(image=image)
