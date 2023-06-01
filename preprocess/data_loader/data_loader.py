@@ -146,7 +146,7 @@ class DataLoader():
             img, boxes)
         if denoise:
             img = self.model.predict(
-                np.array(img).reshape(self.input_shape), axes="YX")
+                np.array(img).reshape((self.input_shape, self.input_shape)), axes="YX")
         return (img, boxes, file) if return_filename else (img, boxes)
     
     def _format_for(self, image_id, path, boxes, file, denoise, return_filename, target_library=None):
@@ -188,7 +188,7 @@ class DataLoader():
     
     def _class_format_for(self, img, preprocessed_img, classify_types, box, for_display, output_size, target_library=None, types_as=None):
         if target_library=="hugging_face":
-            return {"image": Image.fromarray(np.array(preprocessed_img).reshape(output_size)),
+            return {"image": Image.fromarray(np.array(preprocessed_img).reshape((output_size, output_size))),
                                "label": box["pathology"]}
         if classify_types:
             if types_as == "int":
@@ -222,7 +222,7 @@ class DataLoader():
 
                         if denoise:
                             preprocessed_img = self.model.predict(
-                                np.array(preprocessed_img).reshape(self.input_shape), axes="YX")
+                                np.array(preprocessed_img).reshape((self.input_shape, self.input_shape)), axes="YX")
                         response = self._class_format_for(img, preprocessed_img, classify_types, box, for_display, output_size, target_library, types_as)
                         yield response
 
