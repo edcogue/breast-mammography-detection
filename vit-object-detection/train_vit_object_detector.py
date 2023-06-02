@@ -202,7 +202,7 @@ trainer = Trainer(
 
 trainer.train()
 
-model_name=f'./detr__{checkpoint.replace("/","_")}_{datetime.now().strftime("%d%m%Y_%H%M%S")}'
+model_name=f'./detr_{checkpoint.replace("/","_")}_{datetime.now().strftime("%d%m%Y_%H%M%S")}'
 model.save_pretrained(model_name)
 
 
