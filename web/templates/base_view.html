@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Detección masas cancerígenas en mamografías con Vision Transformers</title>
+    <title>{{ title }}</title>
     <link
       rel="stylesheet"
       href="{{ url_for('static', filename='css/bootstrap.min.css') }}"
@@ -30,7 +30,7 @@
     <div class="py-4">
       <header class="text-white text-center">
         <h1 class="display-5">
-          Detección de masas cancerígenas en mamografías con Vision Transformers
+            {{title}}
         </h1>
         <div class="row">
           <div class="col-md-6">
@@ -44,39 +44,10 @@
           <div class="col-md-6">
             <div class="row py-4" style="height: 100%">
               <div class="col-lg-6 align-self-center mx-auto">
-                <div id="legend" style="display: none">
-                  <h2>
-                    Tipos de anomalia
-                  </h2>
-                  <div class="row d-flex flex-row  justify-content-start">
-                    <div class="container colored-label" style="background-color: rgba(255,0,0,255);"></div>
-                    <p class="legend-label">Calcificación</p>
-                  </div>
-                  <div class="row d-flex flex-row  justify-content-start">
-                    <div class="container colored-label" style="background-color: rgba(0,0,255,255);"></div>
-                    <p class="legend-label">Masa</p>
-                  </div>
-                  <div class="row d-flex flex-row  justify-content-start">
-                    <div class="container colored-label" style="background-color: rgba(234,247,42,255);"></div>
-                    <p class="legend-label">Asimetria</p>
-                  </div>
-                  <div class="row d-flex flex-row  justify-content-start">
-                    <div class="container colored-label" style="background-color: rgba(0,0,0,255);"></div>
-                    <p class="legend-label">Cluster</p>
-                  </div>
-                  <div class="row d-flex flex-row  justify-content-start">
-                    <div class="container colored-label" style="background-color: rgba(161,97,19,255);"></div>
-                    <p class="legend-label">Distorsión</p>
-                  </div>
-                  <div class="row d-flex flex-row  justify-content-start">
-                    <div class="container colored-label" style="background-color: rgba(156,8,158,255);"></div>
-                    <p class="legend-label">Región espiculada</p>
-                  </div>
-                  <div class="row d-flex flex-row  justify-content-start">
-                    <div class="container colored-label" style="background-color: rgba(97,97,97,255);"></div>
-                    <p class="legend-label">No asociada</p>
-                  </div>
-                </div>
+                {% if legend == True %}
+                    {% include "partials/legend.html" %}
+                {% endif %}
+
                 <!-- Upload image input-->
                 <div
                   id="upload_image_container"
@@ -134,7 +105,12 @@
                       type="button"
                       class="btn btn-info rounded-pill btn-lg btn-block"
                     >
-                      <em class="fa fa-search mr-2"></em> Analizar
+                    {% if is_denoiser == True %}
+                        <em class="fa fa-magic mr-2"></em> Limpiar imagen
+                    {% else %}
+                        <em class="fa fa-search mr-2"></em> Analizar
+                    {% endif %}
+                      
                     </button>
                   </div>
                 </div>
@@ -171,22 +147,16 @@
         </div>
       </header>
     </div>
-    <footer class="text-center text-lg-start fixed-bottom">
-      <div class="text-center p-3">
-        <p id="created_by" class="mb font-weight-bold">
-          Creado por Eduard Conesa Guerrero
-          <a
-            href="https://github.com/edcogue/breast-mammography-detection"
-          >
-            <u><em class="fa fa-github ml-2 fa-3x"></em></u>
-          </a>
-        </p>
-      </div>
-    </footer>
+    
+    {% include "partials/footer.html" %}
+
+    <script>
+        var base_url = "{{ post_endpoint }}"
+    </script>
 
     <script src="{{ url_for('static', filename='js/jquery.js') }}"></script>
     <script src="{{ url_for('static', filename='js/bootstrap.js') }}"></script>
     <script src="{{ url_for('static', filename='js/dwv-v0.30.8.min.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/analize_vit_view/index.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/analize/index.js') }}"></script>
   </body>
 </html>

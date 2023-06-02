@@ -26,7 +26,6 @@ $(document).ready(function (e) {
   app.init({
     dataViewConfigs: { "*": [{ divId: "layerGroup0" }] },
   });
-  var base_url = "/analize_vit";
   $("#refresh_button").on("click", function () {
     window.location.reload();
   });

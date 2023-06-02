@@ -18,7 +18,7 @@ def index():
 
 @app.route("/analize_vit")
 def analize_vit_view():
-    return flask.render_template("analize_vit_view.html")
+    return flask.render_template("base_view.html", title="Detección de anomalias con ViT", post_endpoint="/analize_vit", legend=True)
 
 
 @app.route("/analize_vit", methods=["POST"])
@@ -69,7 +69,7 @@ def analize_vit_image():
 
 @app.route("/analize_yolo")
 def analize_yolo_view():
-    return flask.render_template("analize_yolo_view.html")
+    return flask.render_template("base_view.html", title="Detección de anomalias con YOLOv8", post_endpoint="/analize_yolo", legend=True)
 
 
 @app.route("/analize_yolo", methods=["POST"])
@@ -120,7 +120,7 @@ def analize_yolo_image():
 
 @app.route("/denoise")
 def denoise_view():
-    return flask.render_template("denoise_view.html")
+    return flask.render_template("base_view.html", title="Supresión de ruido para mamografías", post_endpoint="/denoise", is_denoiser=True, legend=False)
 
 
 @app.route("/denoise", methods=["POST"])
