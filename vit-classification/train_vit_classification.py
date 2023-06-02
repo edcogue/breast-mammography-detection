@@ -114,7 +114,7 @@ training_args = TrainingArguments(
     evaluation_strategy="epoch",
     save_strategy="epoch",
     per_device_eval_batch_size=8,
-    num_train_epochs=1,
+    num_train_epochs=10,
     logging_steps=50,
     load_best_model_at_end=True,
     metric_for_best_model="accuracy",
@@ -138,7 +138,7 @@ best_trial = trainer.hyperparameter_search(
     direction="maximize", #default metric is loss
     backend="optuna",
     hp_space=optuna_hp_space,
-    n_trials=1,
+    n_trials=15,
 )
 
 print(best_trial)
