@@ -71,6 +71,17 @@ checkpoint = "facebook/detr-resnet-50"
 
 image_processor = AutoImageProcessor.from_pretrained(checkpoint)
 
+def collate_fn(batch):
+    pixel_values = [item["pixel_values"] for item in batch]
+    encoding = image_processor.pad_and_create_pixel_mask(pixel_values, return_tensors="pt")
+    #encoding = batch
+    labels = [item["labels"] for item in batch]
+    batch = {}
+    batch["pixel_values"] = encoding["pixel_values"]
+    batch["pixel_mask"] = encoding["pixel_mask"]
+    batch["labels"] = labels
+    return batch
+
 def formatted_anns(image_id, category, area, bbox):
     annotations = []
     for i in range(0, len(category)):
@@ -109,104 +120,8 @@ def transform_aug_ann(examples):
 train_ds = dataset["train"].with_transform(transform_aug_ann)
 val_ds = dataset["valid"].with_transform(transform_aug_ann)
 
-def collate_fn(batch):
-    pixel_values = [item["pixel_values"] for item in batch]
-    encoding = image_processor.pad_and_create_pixel_mask(pixel_values, return_tensors="pt")
-    #encoding = batch
-    labels = [item["labels"] for item in batch]
-    batch = {}
-    batch["pixel_values"] = encoding["pixel_values"]
-    batch["pixel_mask"] = encoding["pixel_mask"]
-    batch["labels"] = labels
-    return batch
-
-def optuna_hp_space(trial):
-    return {
-        "learning_rate": trial.suggest_float("learning_rate", 1e-6, 1e-4, log=True),
-        "weight_decay": trial.suggest_float("weight_decay", 1e-6, 1e-4, log=True),
-    }
-
-def model_init(trial):
-  return AutoModelForObjectDetection.from_pretrained(
-    checkpoint,
-    id2label=id2label,
-    label2id=label2id,
-    ignore_mismatched_sizes=True,
-)
-
-training_args = TrainingArguments(
-    output_dir="hyper_params",
-    per_device_train_batch_size=2,
-    num_train_epochs=5,
-    fp16=False,
-    logging_steps=50,
-    save_strategy="no",
-    remove_unused_columns=False,
-    push_to_hub=False,
-)
-
-trainer = Trainer(
-    model=None,
-    args=training_args,
-    data_collator=collate_fn,
-    train_dataset=train_ds,
-    eval_dataset=val_ds,
-    tokenizer=image_processor,
-    model_init=model_init,
-)
-
-best_trial = trainer.hyperparameter_search(
-    direction="minimize", #default metric is loss
-    backend="optuna",
-    hp_space=optuna_hp_space,
-    n_trials=8,
-)
-
-print(best_trial)
-
 model = AutoModelForObjectDetection.from_pretrained(
-    checkpoint,
-    id2label=id2label,
-    label2id=label2id,
-    ignore_mismatched_sizes=True,
-)
-
-early_stop = EarlyStoppingCallback(10)
-
-training_args = TrainingArguments(
-    output_dir=f'/workspace/test_vit_{checkpoint.replace("/","_")}_{datetime.now().strftime("%d%m%Y_%H%M%S")}',
-    per_device_train_batch_size=2,
-    num_train_epochs=100,
-    fp16=False,
-    logging_steps=50,
-    learning_rate=best_trial.hyperparameters["learning_rate"],
-    weight_decay=best_trial.hyperparameters["weight_decay"],
-    save_total_limit=4,
-    remove_unused_columns=False,
-    push_to_hub=False,
-    load_best_model_at_end=True,
-    save_strategy="epoch",
-    evaluation_strategy="epoch"
-    
-)
-
-trainer = Trainer(
-    model=model,
-    args=training_args,
-    data_collator=collate_fn,
-    train_dataset=train_ds,
-    eval_dataset=val_ds,
-    tokenizer=image_processor,
-    callbacks=[early_stop]
-)
-
-trainer.train()
-
-model_name=f'./detr_{checkpoint.replace("/","_")}_{datetime.now().strftime("%d%m%Y_%H%M%S")}'
-model.save_pretrained(model_name)
-
-model = AutoModelForObjectDetection.from_pretrained(
-    model_name,
+    "./detr_facebook_detr-resnet-50_04062023_223806",
     ignore_mismatched_sizes=True,
 )
 
