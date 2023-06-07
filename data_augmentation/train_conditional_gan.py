@@ -5,6 +5,7 @@ import tensorflow as tf
 from tensorflow.keras.layers import Dense, Flatten, Conv2D, BatchNormalization
 from tensorflow.keras import Model
 import time
+import json
 import sys
 sys.path.append('/tf/code/preprocess/data_loader')
 from data_loader import DataLoader
@@ -51,6 +52,7 @@ discriminator = tf.keras.Sequential(
         tf.keras.layers.Conv2D(128, (5, 5), strides=(2, 2), padding="same"),
         tf.keras.layers.LeakyReLU(alpha=0.2),
         tf.keras.layers.BatchNormalization(),
+        tf.keras.layers.Dropout(0.5),
         tf.keras.layers.Conv2D(256, (5, 5), strides=(2, 2), padding="same"),
         tf.keras.layers.LeakyReLU(alpha=0.2),
         tf.keras.layers.BatchNormalization(),
@@ -62,6 +64,7 @@ discriminator = tf.keras.Sequential(
         tf.keras.layers.Conv2D(1024, (5, 5), strides=(1, 1), padding="same"),
         tf.keras.layers.LeakyReLU(alpha=0.2),
         tf.keras.layers.BatchNormalization(),
+        tf.keras.layers.Dropout(0.3),
         tf.keras.layers.GlobalMaxPooling2D(),
         tf.keras.layers.Dense(1, activation="sigmoid"),
     ],
@@ -200,21 +203,34 @@ class ConditionalGAN(tf.keras.Model):
             "g_loss": self.gen_loss_tracker.result(),
             "d_loss": self.disc_loss_tracker.result(),
         }
+    
+# Callbacks to save and log
+
+save_generator_callback = tf.keras.callbacks.LambdaCallback(
+    on_epoch_end=lambda epoch, logs: save_generator(),
+)
+
+def save_generator():
+    cond_gan.generator.save(f'./mammographies_gan_{datetime.now().strftime("%d%m%Y_%H%M%S")}')
+    cond_gan.discriminator.save(f'./mammographies_disc_{datetime.now().strftime("%d%m%Y_%H%M%S")}')
+    
+
+json_log = open(f'loss_log_{datetime.now().strftime("%d%m%Y_%H%M%S")}.json', mode='wt', buffering=1)
+json_logging_callback = tf.keras.callbacks.LambdaCallback(
+    on_epoch_end=lambda epoch, logs: json_log.write(
+        json.dumps({'epoch': epoch, 'g_loss': logs['g_loss'], 'd_loss': logs['d_loss']}) + '\n'),
+    on_train_end=lambda logs: json_log.close()
+)
 
 cond_gan = ConditionalGAN(
     discriminator=discriminator, generator=generator, latent_dim=latent_dim
 )
 cond_gan.compile(
-    d_optimizer=tf.keras.optimizers.Adam(learning_rate=0.000004, beta_1=0.5, beta_2=0.999, epsilon=1e-08),
+    d_optimizer=tf.keras.optimizers.Adam(learning_rate=0.000001, beta_1=0.5, beta_2=0.999, epsilon=1e-08),
     g_optimizer=tf.keras.optimizers.Adam(learning_rate=0.00001, beta_1=0.5, beta_2=0.999, epsilon=1e-08),
     loss_fn=tf.keras.losses.BinaryCrossentropy(from_logits=True),
 )
 
-cond_gan.fit(train_ds, epochs=50)
-
-# We first extract the trained generator from our Conditiona GAN.
-trained_gen = cond_gan.generator
-
-model_name=f'./mammographies_gan_{datetime.now().strftime("%d%m%Y_%H%M%S")}'
-
-trained_gen.save(model_name)
+cond_gan.fit(train_ds,
+             epochs=35,
+             callbacks=[json_logging_callback, save_generator_callback])
