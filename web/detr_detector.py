@@ -16,7 +16,7 @@ label2id = {'Abnormality': 0}
 image_processor = AutoImageProcessor.from_pretrained("facebook/detr-resnet-50")
 
 model = AutoModelForObjectDetection.from_pretrained(
-    "./models/vit_object_detection/vit__facebook_detr-resnet-50_20052023_172920",
+    "./models/detr_object_detection",
     id2label=id2label,
     label2id=label2id,
     ignore_mismatched_sizes=True,
@@ -32,7 +32,7 @@ def detect_abnormalities(image):
     outputs = model(**inputs)
     target_sizes = torch.tensor([image.size[::-1]])
     results = image_processor.post_process_object_detection(
-        outputs, target_sizes=target_sizes, threshold=0.75)[0]
+        outputs, target_sizes=target_sizes, threshold=0.7)[0]
     draw = ImageDraw.Draw(image)
     for score, box in zip(results["scores"], results["boxes"]):
         x, y, w, h = tuple(box)

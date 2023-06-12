@@ -4,7 +4,7 @@ import errors
 import cv2
 
 from aux_functions import *
-import vit_detector as vit
+import detr_detector as detr
 import yolo_detector as yolo
 
 # APP SERVER
@@ -47,7 +47,7 @@ def analize_vit_image():
     image = cv2.imread(upload_file_path)
     image = resize_pad_and_clahe(image)
     image = denoise(image)
-    image = vit.detect_abnormalities(image)
+    image = detr.detect_abnormalities(image)
     image.save(result_file_path)
     exit_code = 0
     # exit_code, result_file_path = process_image(
