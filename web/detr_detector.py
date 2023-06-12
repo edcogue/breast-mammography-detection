@@ -40,8 +40,9 @@ def detect_abnormalities(image):
         y = float(y)
         w = float(w)
         h = float(h)
-        results = classify_pathology(image.crop((x, y, w, h)))
-        color_type = classify_type(image.crop((x, y, w, h)))
+        abnormality = image.crop((x, y, w, h))
+        results = classify_pathology(abnormality)
+        color_type = classify_type(abnormality)
         color_text = (0, 255, 0, 255) if results["label"] == "B" else (
             255, 0, 0, 255)
         draw.rectangle((x, y, w, h), outline=color_type, width=8)
