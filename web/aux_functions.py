@@ -8,7 +8,7 @@ import glob
 from werkzeug.utils import secure_filename
 from preprocess_image import *
 
-ALLOWED_EXTENSIONS = {"png", "dcm", "jpg"}
+ALLOWED_EXTENSIONS = {"png", "jpeg", "jpg"}
 
 UPLOAD_FOLDER = os.path.join("/app", "temp_images")
 RESULT_FOLDER = os.path.join("/app/static/images/", "analized")
