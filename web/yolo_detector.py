@@ -30,7 +30,7 @@ def detect_abnormalities(image):
             255, 0, 0, 255)
         draw.rectangle((x, y, w, h), outline=color_type, width=8)
         draw.text(get_text_position(x, y, image),
-                  f"{results['label'].upper()} {float(results['score']):.2f}", font=font, fill=color_text, stroke_width=1)
+                  f"{results['label'].upper()} {int(float(results['score'])*100)}%", font=font, fill=color_text, stroke_width=1)
     return image
 
 

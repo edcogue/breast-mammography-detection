@@ -11,6 +11,4 @@ RUN pip install torch torchvision --index-url https://download.pytorch.org/whl/c
 RUN pip install ultralytics
 RUN pip install opencv-python
 RUN pip install dill
-#COPY . .
-#CMD [ "python3", "app.py"]
 CMD ["flask", "run",  "--host=0.0.0.0","--port=8080", "--debug"]
